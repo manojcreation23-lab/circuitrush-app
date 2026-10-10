@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CircuitRush — Quick Commerce for Engineers</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              circuit: {
+                50: "#eef9ff",
+                100: "#d9f2ff",
+                400: "#46b2ff",
+                500: "#1e8ce8",
+                600: "#1468b5",
+                700: "#0e4a86",
+                900: "#102c52"
+              },
+              accent: "#ffb703",
+              success: "#22c55e",
+              warn: "#f59e0b",
+              danger: "#ef4444"
+            },
+            boxShadow: {
+              soft: "0 18px 48px rgba(15, 23, 42, 0.08)"
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      html, body { height: 100%; }
+      body {
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background:
+          radial-gradient(circle at top left, rgba(30,140,232,0.08), transparent 35%),
+          linear-gradient(180deg, #f8fbff 0%, #f2f6fb 100%);
+      }
+      .hide-scrollbar::-webkit-scrollbar { display: none; }
+      .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      .qr-pattern {
+        background:
+          radial-gradient(circle, rgba(0,0,0,0.95) 2px, transparent 2.2px) 0 0 / 12px 12px,
+          linear-gradient(180deg, #fff, #f2f5f8);
+        border-radius: 18px;
+      }
+      .slide-up {
+        animation: slideUp 0.28s ease-out;
+      }
+      @keyframes slideUp {
+        from { transform: translateY(22px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+      .pulse-dot {
+        animation: pulseDot 1.5s infinite ease-in-out;
+      }
+      @keyframes pulseDot {
+        0%, 100% { transform: scale(1); opacity: 0.7; }
+        50% { transform: scale(1.15); opacity: 1; }
+      }
+    </style>
+  </head>
+  <body class="text-slate-800 antialiased">
+    <div id="authScreen" class="min-h-screen flex items-center justify-center p-5">
+      <div class="w-full max-w-md">
+        <div class="rounded-[28px] bg-white/90 border border-slate-200 shadow-soft p-6 backdrop-blur">
+          <div class="flex items-center justify-between mb-8">
+            <div class="flex items-center gap-3">
+              <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-circuit-500 to-circuit-700 flex items-center justify-center text-xl text-white shadow-lg shadow-circuit-500/30">
+                ⚡
+              </div>
+              <div>
+                <div class="text-xs uppercase tracking-[0.2em] text-slate-400 font-semibold">Quick-commerce</div>
+                <div class="text-2xl font-black tracking-tight text-slate-800">CircuitRush</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-600 mb-2">Mobile number</label>
+              <div class="flex items-center rounded-2xl border border-slate-200 bg-slate-50 overflow-hidden focus-within:ring-2 focus-within:ring-circuit-200">
+                <div class="px-3 text-sm font-semibold text-slate-600 bg-slate-100 h-full flex items-center">+91</div>
+                <input id="phoneInput" type="tel" value="9876543210" class="w-full bg-transparent px-4 py-3.5 text-base outline-none placeholder:text-slate-400" placeholder="Enter mobile number" />
+              </div>
+            </div>
+
+            <button id="sendOtpBtn" class="w-full rounded-2xl bg-circuit-600 text-white font-semibold py-3.5 shadow-lg shadow-circuit-600/20 hover:bg-circuit-700 transition">
+              Send OTP
+            </button>
+
+            <div class="relative my-3">
+              <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-slate-200"></div></div>
+              <div class="relative flex justify-center"><span class="bg-white px-3 text-xs font-medium text-slate-400 uppercase tracking-[0.2em]">or</span></div>
+            </div>
+
+            <button id="googleBtn" type="button" class="w-full rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 font-medium py-3.5 flex items-center justify-center gap-3 hover:bg-slate-100 transition">
+              <span class="text-lg">G</span>
+              Continue with Google
+            </button>
+          </div>
+
+          <div class="mt-6 text-center text-xs text-slate-500">
+            By continuing, you agree to CircuitRush's <span class="text-circuit-600 font-medium">Terms</span> and <span class="text-circuit-600 font-medium">Privacy Policy</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="otpScreen" class="hidden min-h-screen flex items-center justify-center p-5">
+      <div class="w-full max-w-md">
+        <div class="rounded-[28px] bg-white/90 border border-slate-200 shadow-soft p-6 backdrop-blur">
+          <div class="mb-6">
+            <button id="backToPhone" class="text-sm text-slate-500 hover:text-slate-700 flex items-center gap-2">
+              <span>←</span> Back
+            </button>
+          </div>
+
+          <div class="mb-6">
+            <div class="text-xs uppercase tracking-[0.2em] text-circuit-600 font-semibold">Verification</div>
+            <h2 class="mt-2 text-3xl font-black tracking-tight text-slate-800">Enter OTP</h2>
+            <p class="mt-2 text-sm text-slate-500">
+              We sent a 4-digit code to <span id="otpPhoneLabel" class="font-semibold text-slate-700">+91 98765 43210</span>
+            </p>
+          </div>
+
+          <div class="flex items-center justify-between gap-3 mb-6">
+            <input id="otp1" class="otp-box w-14 h-14 text-center text-2xl font-bold rounded-2xl border border-slate-200 bg-slate-50 outline-none focus:border-circuit-400 focus:ring-2 focus:ring-circuit-200" maxlength="1" inputmode="numeric" />
+            <input id="otp2" class="otp-box w-14 h-14 text-center text-2xl font-bold rounded-2xl border border-slate-200 bg-slate-50 outline-none focus:border-circuit-400 focus:ring-2 focus:ring-circuit-200" maxlength="1" inputmode="numeric" />
+            <input id="otp3" class="otp-box w-14 h-14 text-center text-2xl font-bold rounded-2xl border border-slate-200 bg-slate-50 outline-none focus:border-circuit-400 focus:ring-2 focus:ring-circuit-200" maxlength="1" inputmode="numeric" />
+            <input id="otp4" class="otp-box w-14 h-14 text-center text-2xl font-bold rounded-2xl border border-slate-200 bg-slate-50 outline-none focus:border-circuit-400 focus:ring-2 focus:ring-circuit-200" maxlength="1" inputmode="numeric" />
+          </div>
+
+          <div class="mb-5 rounded-2xl border border-circuit-100 bg-circuit-50 px-3 py-2 text-sm text-circuit-700">
+            Demo OTP: <span class="font-bold">4213</span>
+          </div>
+
+          <button id="verifyOtpBtn" class="w-full rounded-2xl bg-circuit-600 text-white font-semibold py-3.5 shadow-lg shadow-circuit-600/20 hover:bg-circuit-700 transition">
+            Verify & Continue
+          </button>
+
+          <div class="mt-5 text-center text-sm text-slate-500">
+            Didn't get it? <button id="resendOtpBtn" class="text-circuit-600 font-semibold hover:text-circuit-700">Resend</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="appScreen" class="hidden">
+      <div class="mx-auto max-w-md md:max-w-5xl px-3 pb-28 pt-4 md:px-5">
+        <div id="homeSection">
+          <header class="bg-white/80 backdrop-blur-xl border border-slate-200 rounded-[26px] shadow-soft p-4 sticky top-2 z-30">
+            <div class="flex items-center justify-between gap-3">
+              <div class="flex items-center gap-2 min-w-0">
+                <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-circuit-500 to-circuit-700 text-lg font-bold text-white flex items-center justify-center shadow-lg shadow-circuit-500/25">C</div>
+                <div class="min-w-0">
+                  <div class="text-[10px] uppercase tracking-[0.18em] text-slate-400">Delivering from SP Road</div>
+                  <div class="text-sm font-bold text-slate-700 truncate">
+                    <select id="campusSelect" class="bg-transparent outline-none appearance-none text-slate-800 font-semibold min-w-0">
+                      <option>BMSCE Basavanagudi</option>
+                      <option>RVCE Mysore Road</option>
+                      <option>BIT VV Puram</option>
+                      <option>PESU Electronic City</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1.5">
+                  <span class="text-sm">🪙</span>
+                  <span class="text-sm font-bold text-slate-800">
+                    <span id="walletCoinsLabel">250</span> Coins
+                  </span>
+                  <span class="text-[10px] text-slate-500">100 Coins = ₹1</span>
+                </div>
+                <div class="w-11 h-11 rounded-full bg-gradient-to-br from-slate-700 to-slate-900 text-white font-bold flex items-center justify-center text-sm">MK</div>
+              </div>
+            </div>
+          </header>
+
+          <div class="mt-4 sticky top-[92px] z-20 bg-[#f2f6fb]/95 backdrop-blur-xl rounded-2xl border border-slate-200 p-2 shadow-sm">
+            <div class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-3">
+              <span class="text-slate-400 text-lg">⌕</span>
+              <input id="searchBox" type="text" placeholder="Search resistors, ESP32, motors..." class="w-full bg-transparent outline-none placeholder:text-slate-400 text-sm" />
+            </div>
+
+            <div class="mt-3 hide-scrollbar overflow-x-auto flex gap-2 pb-1">
+              <button class="category-pill active" data-category="All">All</button>
+              <button class="category-pill" data-category="Microcontrollers">Microcontrollers</button>
+              <button class="category-pill" data-category="Motors & Drivers">Motors & Drivers</button>
+              <button class="category-pill" data-category="Sensors">Sensors</button>
+              <button class="category-pill" data-category="Wireless">Wireless</button>
+              <button class="category-pill" data-category="Displays">Displays</button>
+              <button class="category-pill" data-category="Power & Batteries">Power & Batteries</button>
+            </div>
+          </div>
+
+          <section class="mt-5">
+            <div class="flex items-center justify-between mb-3">
+              <h2 class="text-xl font-black text-slate-800">Popular essentials</h2>
+              <button class="text-sm text-circuit-600 font-semibold">See all</button>
+            </div>
+            <div id="popularCarousel" class="hide-scrollbar flex gap-3 overflow-x-auto pb-1"></div>
+          </section>
+
+          <section class="mt-6">
+            <div class="flex items-center justify-between mb-3">
+              <h2 class="text-xl font-black text-slate-800">SP Road Components</h2>
+              <div class="text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-600 font-medium">30 min delivery</div>
+            </div>
+            <div id="catalogGrid" class="grid grid-cols-2 gap-3 md:grid-cols-3"></div>
+          </section>
+        </div>
+
+        <div id="ordersSection" class="hidden mt-4">
+          <div class="rounded-[26px] border border-slate-200 bg-white shadow-soft p-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-xs uppercase tracking-[0.18em] text-slate-400">Live order</div>
+                <h2 class="text-2xl font-black text-slate-800">Orders</h2>
+              </div>
+              <div class="rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 text-xs font-semibold">On the way</div>
+            </div>
+
+            <div id="ordersList" class="mt-4 space-y-3"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="floatingCartBar" class="fixed bottom-20 left-1/2 -translate-x-1/2 w-[92%] max-w-md z-40">
+        <button id="openCartBtn" class="w-full rounded-2xl bg-slate-900 text-white px-4 py-3 shadow-2xl shadow-slate-900/20 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="relative">
+              <span class="text-xl">🛒</span>
+              <span id="cartBadge" class="absolute -top-2 -right-2 bg-circuit-500 text-[10px] w-5 h-5 rounded-full text-white flex items-center justify-center font-bold">0</span>
+            </div>
+            <div class="text-left">
+              <div class="text-[10px] uppercase tracking-[0.18em] text-slate-300">Cart</div>
+              <div id="cartSummaryText" class="text-sm font-semibold">0 items</div>
+            </div>
+          </div>
+          <div id="cartTotalText" class="text-base font-black">₹0</div>
+        </button>
+      </div>
+
+      <nav class="fixed bottom-0 left-0 right-0 bg-white/85 backdrop-blur-xl border-t border-slate-200 z-50">
+        <div class="mx-auto max-w-md grid grid-cols-3">
+          <button class="nav-tab active" data-tab="home">
+            <span class="text-lg">⌂</span>
+            <span>Home</span>
+          </button>
+          <button class="nav-tab" data-tab="orders">
+            <span class="text-lg">🧾</span>
+            <span>Orders</span>
+          </button>
+          <button class="nav-tab" data-tab="cart">
+            <span class="text-lg">🛒</span>
+            <span>Cart</span>
+          </button>
+        </div>
+      </nav>
+    </div>
+
+    <div id="cartDrawer" class="fixed inset-0 z-50 hidden">
+      <div class="absolute inset-0 bg-slate-900/30 backdrop-blur-sm"></div>
+      <div class="absolute inset-x-0 bottom-0 mx-auto w-full max-w-md rounded-t-[28px] bg-white shadow-2xl p-4 slide-up">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <div class="text-[10px] uppercase tracking-[0.18em] text-slate-400">Your order</div>
+            <h3 class="text-2xl font-black text-slate-800">Cart</h3>
+          </div>
+          <button id="closeCartBtn" class="w-9 h-9 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center">✕</button>
+        </div>
+
+        <div class="space-y-3 max-h-[35vh] overflow-y-auto pr-1">
+          <div id="cartItemsList"></div>
+        </div>
+
+        <div class="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+          <div class="flex items-center gap-2">
+            <input id="voucherInput" type="text" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-circuit-400 focus:ring-2 focus:ring-circuit-200" placeholder="Gift voucher / code" />
+            <button id="applyVoucherBtn" class="rounded-xl bg-slate-900 text-white px-3 py-2.5 text-sm font-semibold">Apply</button>
+          </div>
+          <div class="mt-2 text-xs text-slate-500">Try: <span class="font-semibold text-circuit-600">CAMPUS100</span> or <span class="font-semibold text-circuit-600">SPROAD50</span></div>
+        </div>
+
+        <div class="mt-4 rounded-2xl border border-slate-200 bg-white p-3">
+          <label class="flex items-center justify-between">
+            <div>
+              <div class="text-sm font-semibold text-slate-700">Redeem coins</div>
+              <div class="text-xs text-slate-500">100 coins = ₹1</div>
+            </div>
+            <button id="coinToggle" class="relative inline-flex h-7 w-12 items-center rounded-full bg-slate-200 transition-colors" aria-label="Toggle coin redemption">
+              <span class="absolute left-1 h-5 w-5 rounded-full bg-white shadow-sm"></span>
+            </button>
+          </label>
+        </div>
+
+        <div class="mt-4 rounded-2xl bg-slate-50 border border-slate-200 p-3 space-y-2">
+          <div class="flex justify-between text-sm"><span class="text-slate-500">Subtotal</span><span id="drawerSubtotal" class="font-semibold">₹0</span></div>
+          <div class="flex justify-between text-sm"><span class="text-slate-500">Delivery</span><span id="drawerDelivery" class="font-semibold">₹45</span></div>
+          <div class="flex justify-between text-sm"><span class="text-slate-500">Discount</span><span id="drawerDiscount" class="font-semibold">-₹0</span></div>
+          <div class="pt-2 border-t border-slate-200 flex justify-between text-base font-black"><span>Total</span><span id="drawerTotal" class="text-circuit-700">₹45</span></div>
+        </div>
+
+        <div class="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+          <div class="flex items-center justify-between mb-3">
+            <div class="text-sm font-semibold text-slate-700">UPI payment</div>
+            <div class="text-[10px] uppercase tracking-[0.18em] text-slate-500">secure</div>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="qr-pattern w-24 h-24 flex-shrink-0 border border-slate-200"></div>
+            <div class="min-w-0">
+              <div class="text-sm font-semibold text-slate-800">circuitrush@okhdfcbank</div>
+              <div class="mt-2 text-xs text-slate-500">Scan to pay instantly with UPI.</div>
+            </div>
+          </div>
+        </div>
+
+        <button id="placeOrderBtn" class="mt-4 w-full rounded-2xl bg-gradient-to-r from-circuit-500 to-circuit-700 text-white font-semibold py-3.5 shadow-lg shadow-circuit-600/20">
+          Place Order
+        </button>
+      </div>
+    </div>
+
+    <script>
+      const demoOtp = "4213";
+
+      const catalog = [
+        { id: 1, name: "ESP32 DevKit", category: "Microcontrollers", price: 499, tag: "Popular", stock: "In stock" },
+        { id: 2, name: "Arduino Nano", category: "Microcontrollers", price: 399, tag: "Student pick", stock: "Pickup in 9 min" },
+        { id: 3, name: "L298N Motor Driver", category: "Motors & Drivers", price: 199, tag: "Top rated", stock: "In stock" },
+        { id: 4, name: "12V DC Gear Motor", category: "Motors & Drivers", price: 349, tag: "Fast moving", stock: "In stock" },
+        { id: 5, name: "HC-SR04 Sensor", category: "Sensors", price: 129, tag: "Hot", stock: "In stock" },
+        { id: 6, name: "LM35 Temp Sensor", category: "Sensors", price: 89, tag: "Popular", stock: "In stock" },
+        { id: 7, name: "ESP8266 WiFi Module", category: "Wireless", price: 319, tag: "New", stock:"Pickup in 12 min" },
+        { id: 8, name: "NRF24L01", category: "Wireless", price: 249, tag: "Popular", stock: "In stock" },
+        { id: 9, name: "16x2 LCD Display", category: "Displays", price: 179, tag: "New", stock: "In stock" },
+        { id: 10, name: "0.96\" OLED", category: "Displays", price: 229, tag: "Best seller", stock: "In stock" },
+        { id: 11, name: "18650 Cell 3.7V", category: "Power & Batteries", price: 149, tag: "Top rated", stock: "In stock" },
+        { id: 12, name: "5V 2A Power Adapter", category: "Power & Batteries", price: 279, tag: "Campus favorite", stock: "In stock" },
+        { id: 13, name: "Breadboard 840 Points", category: "Accessories", price: 129, tag: "Workshop essential", stock:"In stock" },
+        { id: 14, name: "9V Battery Clip", category: "Power & Batteries", price: 65, tag: "Basic", stock:"In stock" }
+      ];
+
+      const popularItems = [1, 3, 6, 7, 9, 11];
+
+      const state = {
+        authStep: "phone",
+        activeTab: "home",
+        activeCategory: "All",
+        searchQuery: "",
+        cart: {},
+        appliedVoucher: null,
+        voucherCodeInput: "",
+        coinsRedeemed: false,
+        walletCoins: 250,
+        orderHistory: [],
+        lastPlacedOrder: null,
+        campus: "BMSCE Basavanagudi"
+      };
+
+      const elements = {
+        authScreen: document.getElementById("authScreen"),
+        otpScreen: document.getElementById("otpScreen"),
+        appScreen: document.getElementById("appScreen"),
+        phoneInput: document.getElementById("phoneInput"),
+        otpPhoneLabel: document.getElementById("otpPhoneLabel"),
+        otp1: document.getElementById("otp1"),
+        otp2: document.getElementById("otp2"),
+        otp3: document.getElementById("otp3"),
+        otp4: document.getElementById("otp4"),
+        popularCarousel: document.getElementById("popularCarousel"),
+        catalogGrid: document.getElementById("catalogGrid"),
+        searchBox: document.getElementById("searchBox"),
+        walletCoinsLabel: document.getElementById("walletCoinsLabel"),
+        campusSelect: document.getElementById("campusSelect"),
+        cartDrawer: document.getElementById("cartDrawer"),
+        cartItemsList: document.getElementById("cartItemsList"),
+        voucherInput: document.getElementById("voucherInput"),
+        drawerSubtotal: document.getElementById("drawerSubtotal"),
+        drawerDelivery: document.getElementById("drawerDelivery"),
+        drawerDiscount: document.getElementById("drawerDiscount"),
+        drawerTotal: document.getElementById("drawerTotal"),
+        cartBadge: document.getElementById("cartBadge"),
+        cartSummaryText: document.getElementById("cartSummaryText"),
+        cartTotalText: document.getElementById("cartTotalText"),
+        ordersList: document.getElementById("ordersList"),
+        homeSection: document.getElementById("homeSection"),
+        ordersSection: document.getElementById("ordersSection"),
+        coinToggle: document.getElementById("coinToggle"),
+        applyVoucherBtn: document.getElementById("applyVoucherBtn"),
+        placeOrderBtn: document.getElementById("placeOrderBtn"),
+        openCartBtn: document.getElementById("openCartBtn"),
+        closeCartBtn: document.getElementById("closeCartBtn"),
+        navTabs: [...document.querySelectorAll(".nav-tab")],
+        categoryPills: [...document.querySelectorAll(".category-pill")]
+      };
+
+      function formatINR(value) {
+        return `₹${Math.round(value).toLocaleString("en-IN")}`;
+      }
+
+      function getFilteredCatalog() {
+        const q = state.searchQuery.trim().toLowerCase();
+        return catalog.filter(item => {
+          const matchesCategory = state.activeCategory === "All" || item.category === state.activeCategory;
+          const text = `${item.name} ${item.category}`.toLowerCase();
+          const matchesSearch = !q || text.includes(q);
+          return matchesCategory && matchesSearch;
+        });
+      }
+
+      function renderPopularCarousel() {
+        elements.popularCarousel.innerHTML = "";
+        popularItems.forEach(id => {
+          const item = catalog.find(p => p.id === id);
+          if (!item) return;
+          const card = document.createElement("div");
+          card.className = "min-w-[190px] rounded-[22px] border border-slate-200 bg-white p-3 shadow-sm";
+          const qty = state.cart[item.id] || 0;
+          card.innerHTML = `
+            <div class="flex items-center justify-between mb-3">
+              <div class="rounded-full bg-circuit-50 text-[10px] font-semibold text-circuit-700 px-2 py-1">${item.tag}</div>
+              <button class="text-circuit-600 text-sm font-semibold add-item" data-id="${item.id}">${qty ? "Add more" : "Add"}</button>
+            </div>
+            <div class="text-base font-black text-slate-800">${item.name}</div>
+            <div class="mt-2 text-xs text-slate-500">${item.category}</div>
+            <div class="mt-4 flex items-center justify-between">
+              <div class="text-lg font-black text-slate-800">${formatINR(item.price)}</div>
+              <div class="flex items-center gap-2">
+                ${qty ? `
+                  <button class="w-7 h-7 rounded-full bg-slate-100 text-slate-700 text-lg leading-none decrement-item" data-id="${item.id}">−</button>
+                  <span class="text-sm font-bold min-w-4 text-center">${qty}</span>
+                  <button class="w-7 h-7 rounded-full bg-circuit-600 text-white text-lg leading-none increment-item" data-id="${item.id}">+</button>
+                ` : `<button class="w-9 h-9 rounded-full bg-circuit-600 text-white text-lg leading-none increment-item" data-id="${item.id}">+</button>`}
+              </div>
+            </div>
+          `;
+          elements.popularCarousel.appendChild(card);
+        });
+      }
+
+      function renderCatalog() {
+        const items = getFilteredCatalog();
+        elements.catalogGrid.innerHTML = "";
+        if (!items.length) {
+          elements.catalogGrid.innerHTML = `
+            <div class="col-span-full rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-center text-slate-500">
+              No components matched your search. Try a different keyword or category.
+            </div>
+          `;
+          return;
+        }
+
+        items.forEach(item => {
+          const qty = state.cart[item.id] || 0;
+          const card = document.createElement("article");
+          card.className = "rounded-[24px] border border-slate-200 bg-white p-3 shadow-sm";
+          card.innerHTML = `
+            <div class="flex items-center justify-between">
+              <div class="rounded-full bg-circuit-50 text-[9px] font-bold text-circuit-700 px-2 py-1 uppercase tracking-[0.12em]">${item.tag}</div>
+              <span class="text-[10px] text-slate-500">${item.stock}</span>
+            </div>
+
+            <div class="mt-3 h-16 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-3xl">
+              ${item.category === "Microcontrollers" ? "🧠" : item.category === "Motors & Drivers" ? "⚙️" : item.category === "Sensors" ? "📡" : item.category === "Wireless" ? "📶" : item.category === "Displays" ? "🖥️" : item.category === "Power & Batteries" ? "🔋" : "🔩"}
+            </div>
+
+            <div class="mt-3">
+              <div class="text-sm font-black text-slate-800 leading-snug">${item.name}</div>
+              <div class="mt-1 text-[11px] text-slate-500">${item.category}</div>
+            </div>
+
+            <div class="mt-4 flex items-center justify-between">
+              <div class="text-lg font-black text-slate-800">${formatINR(item.price)}</div>
+              ${qty > 0 ? `
+                <div class="flex items-center gap-2">
+                  <button class="decrement-item w-8 h-8 rounded-full bg-slate-100 text-slate-700 text-xl leading-none" data-id="${item.id}">−</button>
+                  <span class="min-w-4 text-center text-sm font-bold">${qty}</span>
+                  <button class="increment-item w-8 h-8 rounded-full bg-circuit-600 text-white text-xl leading-none" data-id="${item.id}">+</button>
+                </div>
+              ` : `
+                <button class="increment-item rounded-xl bg-circuit-600 text-white text-xs font-semibold px-3 py-2.5" data-id="${item.id}">+ ADD</button>
+              `}
+            </div>
+          `;
+          elements.catalogGrid.appendChild(card);
+        });
+      }
+
+      function getCartEntries() {
+        return Object.entries(state.cart).filter(([, qty]) => qty > 0).map(([id, qty]) => {
+          const item = catalog.find(i => i.id === Number(id));
+          return { ...item, qty };
+        });
+      }
+
+      function updateCartSummary() {
+        const entries = getCartEntries();
+        const subtotal = entries.reduce((sum, item) => sum + item.price * item.qty, 0);
+        const itemCount = entries.reduce((sum, item) => sum + item.qty, 0);
+        const deliveryFee = itemCount > 0 ? 45 : 0;
+        const voucherDiscount = state.appliedVoucher || 0;
+        const coinDiscount = state.coinsRedeemed ? Math.min(Math.floor(state.walletCoins / 100), Math.max(0, Math.floor(subtotal / 12))) : 0;
+        const total = Math.max(0, subtotal + deliveryFee - voucherDiscount - coinDiscount);
+
+        elements.cartBadge.textContent = itemCount;
+        elements.cartSummaryText.textContent = `${itemCount} item${itemCount === 1 ? "" : "s"}`;
+        elements.cartTotalText.textContent = formatINR(total || subtotal || 0);
+
+        elements.drawerSubtotal.textContent = formatINR(subtotal);
+        elements.drawerDelivery.textContent = formatINR(deliveryFee);
+        elements.drawerDiscount.textContent = `-₹${voucherDiscount + coinDiscount}`;
+        elements.drawerTotal.textContent = formatINR(total);
+
+        if (itemCount === 0) {
+          elements.cartTotalText.textContent = "₹0";
+          elements.drawerTotal.textContent = "₹45";
+          elements.drawerSubtotal.textContent = "₹0";
+          elements.drawerDelivery.textContent = "₹45";
+          elements.drawerDiscount.textContent = "-₹0";
+        }
+      }
+
+      function renderCartDrawer() {
+        const entries = getCartEntries();
+        if (!entries.length) {
+          elements.cartItemsList.innerHTML = `
+            <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center">
+              <div class="text-4xl mb-2">🛒</div>
+              <div class="text-sm font-semibold text-slate-700">Your cart is empty</div>
+              <div class="text-xs mt-1 text-slate-500">Add components from SP Road to get started.</div>
+            </div>
+          `;
+          updateCartSummary();
+          return;
+        }
+
+        elements.cartItemsList.innerHTML = entries.map(item => `
+          <div class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-2">
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-xl">
+              ${item.category === "Microcontrollers" ? "🧠" : item.category === "Motors & Drivers" ? "⚙️" : item.category === "Sensors" ? "📡" : item.category === "Wireless" ? "📶" : item.category === "Displays" ? "🖥️" : item.category === "Power & Batteries" ? "🔋" : "🔩"}
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-bold text-slate-800 truncate">${item.name}</div>
+              <div class="text-xs text-slate-500">${formatINR(item.price)} each</div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button class="decrement-item w-7 h-7 rounded-full bg-white border border-slate-200 text-slate-700" data-id="${item.id}">−</button>
+              <span class="text-sm font-bold min-w-4 text-center">${item.qty}</span>
+              <button class="increment-item w-7 h-7 rounded-full bg-circuit-600 text-white" data-id="${item.id}">+</button>
+            </div>
+          </div>
+        `).join("");
+        updateCartSummary();
+      }
+
+      function renderOrders() {
+        if (!state.orderHistory.length) {
+          elements.ordersList.innerHTML = `
+            <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-center">
+              <div class="text-4xl mb-3">🧭</div>
+              <div class="text-sm font-semibold text-slate-700">No live order yet</div>
+              <div class="text-xs mt-1 text-slate-500">Place an order and your delivery tracker will appear here.</div>
+            </div>
+          `;
+          return;
+        }
+
+        elements.ordersList.innerHTML = state.orderHistory.map((order, index) => `
+          <div class="rounded-[22px] border border-slate-200 bg-white p-3 shadow-sm">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-xs uppercase tracking-[0.18em] text-slate-400">Order #${order.id}</div>
+                <div class="text-lg font-black">${order.status}</div>
+              </div>
+              <div class="text-right">
+                <div class="text-[10px] uppercase tracking-[0.18em] text-slate-400">Security OTP</div>
+                <div class="font-bold text-circuit-700">${order.securityOtp}</div>
+              </div>
+            </div>
+
+            <div class="mt-3 flex items-center justify-between text-xs text-slate-500">
+              <span>${order.items.length} item${order.items.length === 1 ? "" : "s"}</span>
+              <span>Campus gate: ${state.campus}</span>
+            </div>
+
+            <div class="mt-4 space-y-2">
+              <div class="flex items-center gap-2">
+                <div class="pulse-dot w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
+                <div class="text-xs font-medium text-emerald-700">Order confirmed</div>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="w-2.5 h-2.5 rounded-full bg-amber-400"></div>
+                <div class="text-xs font-medium text-amber-700">Packed at SP Road hub</div>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="w-2.5 h-2.5 rounded-full bg-slate-300"></div>
+                <div class="text-xs font-medium text-slate-500">Out for delivery</div>
+              </div>
+            </div>
+
+            <div class="mt-4 flex items-center justify-between rounded-2xl bg-slate-50 border border-slate-200 px-3 py-2">
+              <div class="text-sm text-slate-500">Total bill</div>
+              <div class="text-lg font-black text-slate-800">${formatINR(order.total)}</div>
+            </div>
+          </div>
+        `).join("");
+      }
+
+      function updateWalletUI() {
+        elements.walletCoinsLabel.textContent = state.walletCoins;
+      }
+
+      function renderAll() {
+        renderPopularCarousel();
+        renderCatalog();
+        renderCartDrawer();
+        renderOrders();
+        updateWalletUI();
+        updateCartSummary();
+      }
+
+      function addQuantity(id) {
+        const current = state.cart[id] || 0;
+        state.cart[id] = current + 1;
+        renderAll();
+      }
+
+      function removeQuantity(id) {
+        const current = state.cart[id] || 0;
+        if (current <= 1) {
+          delete state.cart[id];
+        } else {
+          state.cart[id] = current - 1;
+        }
+        renderAll();
+      }
+
+      function showAuthScreen() {
+        elements.authScreen.classList.remove("hidden");
+        elements.otpScreen.classList.add("hidden");
+        elements.appScreen.classList.add("hidden");
+      }
+
+      function showOtpScreen() {
+        const phone = elements.phoneInput.value.trim();
+        elements.otpPhoneLabel.textContent = `+91 ${phone.replace(/(\d{5})(\d{5})/, "$1 $2")}`;
+        elements.authScreen.classList.add("hidden");
+        elements.otpScreen.classList.remove("hidden");
+        elements.appScreen.classList.add("hidden");
+      }
+
+      function showAppScreen() {
+        elements.authScreen.classList.add("hidden");
+        elements.otpScreen.classList.add("hidden");
+        elements.appScreen.classList.remove("hidden");
+      }
+
+      function verifyOtpCode() {
+        const digits = [elements.otp1.value, elements.otp2.value, elements.otp3.value, elements.otp4.value].join("");
+        if (digits.length !== 4) {
+          alert("Please enter the complete 4-digit OTP.");
+          return;
+        }
+        if (digits === demoOtp) {
+          showAppScreen();
+          state.activeTab = "home";
+          updateNavState();
+          return;
+        }
+        alert("Invalid OTP. Use the demo code 4213.");
+      }
+
+      function openCart() {
+        elements.cartDrawer.classList.remove("hidden");
+      }
+
+      function closeCart() {
+        elements.cartDrawer.classList.add("hidden");
+      }
+
+      function applyVoucher() {
+        const code = elements.voucherInput.value.trim().toUpperCase();
+        if (!code) {
+          state.appliedVoucher = 0;
+          renderAll();
+          return;
+        }
+        if (code === "CAMPUS100") {
+          state.appliedVoucher = 100;
+          elements.voucherInput.value = code;
+        } else if (code === "SPROAD50") {
+          state.appliedVoucher = 50;
+          elements.voucherInput.value = code;
+        } else {
+          state.appliedVoucher = 0;
+          alert("Invalid voucher code. Use CAMPUS100 or SPROAD50.");
+        }
+        renderAll();
+      }
+
+      function toggleCoinRedeem() {
+        state.coinsRedeemed = !state.coinsRedeemed;
+        elements.coinToggle.classList.toggle("bg-circuit-500", state.coinsRedeemed);
+        elements.coinToggle.classList.toggle("bg-slate-200", !state.coinsRedeemed);
+        const knob = elements.coinToggle.querySelector("span");
+        if (state.coinsRedeemed) {
+          knob.classList.remove("left-1");
+          knob.classList.add("right-1");
+          knob.style.left = "auto";
+          knob.style.right = "4px";
+        } else {
+          knob.classList.add("left-1");
+          knob.classList.remove("right-1");
+          knob.style.left = "4px";
+          knob.style.right = "auto";
+        }
+        renderAll();
+      }
+
+      function updateNavState() {
+        elements.navTabs.forEach(tab => {
+          const active = tab.dataset.tab === state.activeTab;
+          tab.classList.toggle("active", active);
+          tab.classList.toggle("text-circuit-700", active);
+          tab.classList.toggle("text-slate-500", !active);
+          tab.classList.toggle("bg-circuit-50", active);
+          tab.classList.toggle("font-bold", active);
+        });
+
+        const isHome = state.activeTab === "home";
+        elements.homeSection.classList.toggle("hidden", !isHome);
+        elements.ordersSection.classList.toggle("hidden", state.activeTab !== "orders");
+
+        if (state.activeTab === "cart") {
+          openCart();
+        } else {
+          closeCart();
+        }
+      }
+
+      function generateOrderId() {
+        const d = new Date();
+        return `CR-${d.getFullYear()}${String(d.getMonth() + 1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}-${Math.floor(Math.random() * 9000 + 1000)}`;
+      }
+
+      function placeOrder() {
+        const entries = getCartEntries();
+        if (!entries.length) {
+          alert("Add at least one component to place the order.");
+          return;
+        }
+
+        const subtotal = entries.reduce((sum, item) => sum + item.price * item.qty, 0);
+        const delivery = 45;
+        const voucherDiscount = state.appliedVoucher || 0;
+        const coinDiscount = state.coinsRedeemed ? Math.min(10, Math.max(0, Math.floor(state.walletCoins / 100))) : 0;
+        const total = Math.max(0, subtotal + delivery - voucherDiscount - coinDiscount);
+
+        const order = {
+          id: generateOrderId(),
+          securityOtp: String(Math.floor(1000 + Math.random() * 9000)),
+          total,
+          status: "Preparing",
+          items: entries,
+          createdAt: new Date().toISOString()
+        };
+
+        state.orderHistory.unshift(order);
+        state.walletCoins += 100;
+        state.lastPlacedOrder = order;
+        state.appliedVoucher = 0;
+        state.coinsRedeemed = false;
+        state.cart = {};
+        elements.voucherInput.value = "";
+        elements.coinToggle.classList.remove("bg-circuit-500");
+        elements.coinToggle.classList.add("bg-slate-200");
+        const knob = elements.coinToggle.querySelector("span");
+        knob.style.left = "4px";
+        knob.style.right = "auto";
+        closeCart();
+        state.activeTab = "orders";
+        updateNavState();
+        renderAll();
+        alert(`Order placed successfully!\nOrder ID: ${order.id}\nSecurity OTP: ${order.securityOtp}\nReward coins: +100`);
+      }
+
+      document.getElementById("sendOtpBtn").addEventListener("click", () => {
+        const phone = elements.phoneInput.value.trim();
+        if (!/^[6-9]\d{9}$/.test(phone)) {
+          alert("Please enter a valid 10-digit mobile number.");
+          return;
+        }
+        showOtpScreen();
+      });
+
+      document.getElementById("googleBtn").addEventListener("click", () => {
+        showAppScreen();
+        state.activeTab = "home";
+        updateNavState();
+      });
+
+      document.getElementById("backToPhone").addEventListener("click", () => {
+        showAuthScreen();
+      });
+
+      document.getElementById("verifyOtpBtn").addEventListener("click", verifyOtpCode);
+
+      document.getElementById("resendOtpBtn").addEventListener("click", () => {
+        alert(`A new OTP was resent to +91 ${elements.phoneInput.value.trim()}. Demo OTP: ${demoOtp}`);
+      });
+
+      ["otp1","otp2","otp3","otp4"].forEach((id, index) => {
+        const input = document.getElementById(id);
+        input.addEventListener("input", (e) => {
+          e.target.value = e.target.value.replace(/[^0-9]/g, "").slice(0,1);
+          if (e.target.value && index < 3) {
+            document.getElementById(["otp2","otp3","otp4"][index]).focus();
+          }
+        });
+        input.addEventListener("keydown", (e) => {
+          if (e.key === "Backspace" && !e.target.value && index > 0) {
+            document.getElementById(["otp1","otp2","otp3"][index - 1]).focus();
+          }
+        });
+      });
+
+      elements.searchBox.addEventListener("input", (e) => {
+        state.searchQuery = e.target.value;
+        renderCatalog();
+      });
+
+      elements.campusSelect.addEventListener("change", (e) => {
+        state.campus = e.target.value;
+      });
+
+      document.querySelectorAll(".category-pill").forEach(button => {
+        button.addEventListener("click", () => {
+          state.activeCategory = button.dataset.category;
+          document.querySelectorAll(".category-pill").forEach(btn => btn.classList.toggle("active", btn === button));
+          renderCatalog();
+        });
+      });
+
+      document.addEventListener("click", (e) => {
+        const target = e.target;
+
+        if (target.classList.contains("increment-item")) {
+          addQuantity(Number(target.dataset.id));
+        }
+        if (target.classList.contains("decrement-item")) {
+          removeQuantity(Number(target.dataset.id));
+        }
+        if (target.classList.contains("add-item")) {
+          addQuantity(Number(target.dataset.id));
+        }
+      });
+
+      document.querySelectorAll(".nav-tab").forEach(tab => {
+        tab.addEventListener("click", () => {
+          const next = tab.dataset.tab;
+          if (next === "cart") {
+            state.activeTab = "cart";
+          } else {
+            state.activeTab = next;
+          }
+          updateNavState();
+        });
+      });
+
+      elements.openCartBtn.addEventListener("click", () => {
+        state.activeTab = "cart";
+        updateNavState();
+      });
+
+      elements.closeCartBtn.addEventListener("click", () => {
+        state.activeTab = "home";
+        updateNavState();
+      });
+
+      elements.applyVoucherBtn.addEventListener("click", applyVoucher);
+      elements.coinToggle.addEventListener("click", toggleCoinRedeem);
+      elements.placeOrderBtn.addEventListener("click", placeOrder);
+
+      document.getElementById("voucherInput").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") applyVoucher();
+      });
+
+      function initCategoryStyles() {
+        document.querySelectorAll(".category-pill").forEach((pill) => {
+          pill.classList.add("rounded-full", "px-3", "py-2", "text-sm", "font-medium", "whitespace-nowrap", "transition");
+          pill.classList.add("border", "border-slate-200", "bg-white", "text-slate-600");
+          pill.classList.add("active:border-circuit-200", "active:bg-circuit-50", "active:text-circuit-700");
+        });
+      }
+
+      initCategoryStyles();
+      renderAll();
+      updateNavState();
+      showAuthScreen();
+    </script>
+  </body>
+</html>
